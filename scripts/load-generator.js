@@ -1,5 +1,4 @@
-import axios from 'axios'
-import { randomUUID } from 'crypto'
+const axios = require('axios');
 
 const API_URL = 'http://localhost:3000/orders'
 const USERS = ['alice', 'bob', 'carol', 'dave']
@@ -21,11 +20,26 @@ async function sendOrder() {
   }
 }
 
-async function runLoad(count = 100, delay = 10) {
-  for (let i = 0; i < count; i++) {
-    await sendOrder()
-    await sleep(delay)
+async function runWorker(orderCount, delay) {
+  for (let i = 0; i < orderCount; i++) {
+    await sendOrder();
+    if (delay > 0) await sleep(delay);
   }
 }
 
-runLoad(100, 5) // 100 orders, 5ms apart
+async function runLoad(totalOrders = 1000, concurrency = 10, delay = 0) {
+  const ordersPerWorker = Math.floor(totalOrders / concurrency);
+  const workers = [];
+
+  for (let i = 0; i < concurrency; i++) {
+    workers.push(runWorker(ordersPerWorker, delay));
+  }
+
+  console.time("stress-test");
+  await Promise.all(workers);
+  console.timeEnd("stress-test");
+
+  console.log(`Sent ~${totalOrders} orders using ${concurrency} workers`);
+}
+
+runLoad(100000, 1000, 0);
