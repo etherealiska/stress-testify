@@ -1,5 +1,5 @@
 import { Order } from "../types/order";
 
-export interface MessageQueue {
+export interface Messenger {
   add(order: Order): void;
 }

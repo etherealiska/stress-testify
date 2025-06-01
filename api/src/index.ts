@@ -1,12 +1,14 @@
-import Fastify, { FastifyReply, FastifyRequest } from 'fastify'
+import Fastify from 'fastify'
 import Redis from 'ioredis'
-import { randomUUID } from 'crypto'
 import { RedisStream } from './adapters/redisStream'
-import { MessageQueue } from './interfaces/messageQueue'
-import { Order, OrderRequest } from './types/order'
+import { handleOrder } from './handlers/orderHandler'
+import { Pool } from 'pg'
+import { PostgresWriter } from './adapters/db'
 
 const fastify = Fastify()
 const redis = new Redis()
+
+const pool = new Pool({ connectionString: 'http://localhost:5432', max: 10 });
 
 const orderSchema = {
   body: {
@@ -20,8 +22,11 @@ const orderSchema = {
 } as const
 
 const redisList = new RedisStream(redis);
+const db = new PostgresWriter(pool);
 
 fastify.post('/orders', { schema: orderSchema }, handleOrder(redisList))
+
+fastify.post('/ordersSerial', { schema: orderSchema }, handleOrder(db))
 
 fastify.get('/health', async () => {
   return { status: 'ok' }
@@ -34,20 +39,3 @@ fastify.listen({ port: 3000 }, (err, address) => {
   }
   console.log(`🚀 Fastify API running at ${address}`)
 })
-
-function handleOrder(queue: MessageQueue) {
-  return async (request: FastifyRequest<OrderRequest>, reply: FastifyReply) => {
-    const { userId, productId } = request.body
-
-    const order: Order = {
-      id: randomUUID(),
-      userId,
-      productId,
-      createdAt: new Date().toISOString()
-    }
-
-    await queue.add(order)
-
-    reply.code(202).send({ status: 'queued', orderId: order.id })
-  }
-}

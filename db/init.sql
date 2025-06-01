@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS orders (
+  id VARCHAR(50) PRIMARY KEY,
+  user_id VARCHAR(50) NOT NULL,
+  product_id VARCHAR(50) NOT NULL,
+  created_at TIMESTAMP NOT NULL
+);
