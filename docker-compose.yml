@@ -21,3 +21,10 @@ services:
       dockerfile: Dockerfile  # optional if your Dockerfile is named 'Dockerfile' in context
     ports:
       - "3000:3000" # Map port 3000 inside container to 3000 on host
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      REDIS_HOST: redis
+      POSTGRES_HOST: postgres
+

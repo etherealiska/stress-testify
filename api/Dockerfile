@@ -4,11 +4,10 @@ FROM node:24-alpine3.21
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json (if exists)
-COPY package*.json ./
+COPY . .
 
 # Install dependencies
-RUN npm install --production
+RUN npm install
 
 # Build TypeScript to JS
 RUN npm run build
