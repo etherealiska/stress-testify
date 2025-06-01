@@ -1,23 +1,12 @@
 import Fastify, { FastifyReply, FastifyRequest } from 'fastify'
 import Redis from 'ioredis'
 import { randomUUID } from 'crypto'
+import { RedisStream } from './adapters/redisStream'
+import { MessageQueue } from './interfaces/messageQueue'
+import { Order, OrderRequest } from './types/order'
 
 const fastify = Fastify()
 const redis = new Redis()
-
-interface Order {
-  id: string
-  userId: string
-  productId: string
-  createdAt: string
-}
-
-interface OrderRequest {
-  Body: {
-    userId: string
-    productId: string
-  }
-}
 
 const orderSchema = {
   body: {
@@ -29,28 +18,6 @@ const orderSchema = {
     },
   },
 } as const
-
-interface MessageQueue {
-  add(order: Order): void;
-}
-
-class RedisStream implements MessageQueue {
-  constructor(private redis: Redis) { }
-
-  async add(order: Order) { 
-    const streamKey = 'orderStream';
-
-    await redis.xadd(
-      streamKey,
-      'id', order.id,
-      'userId', order.userId,
-      'productId', order.productId,
-      'createdAt', order.createdAt
-    );
-
-    console.log(`Pushed order ${order.id} to stream`);
-  }
-}
 
 const redisList = new RedisStream(redis);
 
